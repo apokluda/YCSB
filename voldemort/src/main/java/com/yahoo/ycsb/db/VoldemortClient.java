@@ -1,21 +1,21 @@
 package com.yahoo.ycsb.db;
 
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
-import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
 import voldemort.client.ClientConfig;
 import voldemort.client.SocketStoreClientFactory;
 import voldemort.client.StoreClient;
-import voldemort.versioning.VectorClock;
+import voldemort.client.UpdateAction;
 import voldemort.versioning.Versioned;
 
+import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.DB;
 import com.yahoo.ycsb.DBException;
-import com.yahoo.ycsb.ByteIterator;
 import com.yahoo.ycsb.StringByteIterator;
 
 
@@ -73,7 +73,7 @@ public class VoldemortClient extends DB {
 		if ( checkStore(table) == ERROR ) {
 			return ERROR;
 		}
-		storeClient.put(key, (HashMap<String,String>)StringByteIterator.getStringMap(values));
+		storeClient.put(key, StringByteIterator.getStringMap(values));
 		return OK;
 	}
 
@@ -109,26 +109,28 @@ public class VoldemortClient extends DB {
 	}
 
 	@Override
-	public int update(String table, String key, HashMap<String, ByteIterator> values) {
+	public int update(String table, final String key, final HashMap<String, ByteIterator> values) {
 		if ( checkStore(table) == ERROR ) {
 			return ERROR;
 		}
 		
-		Versioned<HashMap<String, String>> versionedValue = storeClient.get(key);
-		HashMap<String, String> value = new HashMap<String, String>();
-		VectorClock version;
-		if ( versionedValue != null ) {
-			version = ((VectorClock) versionedValue.getVersion()).incremented(0, 1);
-			value = versionedValue.getValue();
-			for (Entry<String, ByteIterator> entry : values.entrySet()) {
-				value.put(entry.getKey(), entry.getValue().toString());
+		storeClient.applyUpdate(new UpdateAction<String, HashMap<String, String>>() {
+			@Override
+			public void update(StoreClient<String, HashMap<String, String>> storeClient) {
+				Versioned<HashMap<String, String>> versionedValue = storeClient.get(key);
+				HashMap<String, String> value = new HashMap<String, String>();
+				if ( versionedValue != null ) {
+					value = versionedValue.getValue();
+					for (Entry<String, ByteIterator> entry : values.entrySet()) {
+						value.put(entry.getKey(), entry.getValue().toString());
+					}
+				} else {
+					StringByteIterator.putAllAsStrings(value, values);
+				}
+				
+				storeClient.put(key, value);
 			}
-		} else {
-			version = new VectorClock();
-			StringByteIterator.putAllAsStrings(value, values);
-		}
-		
-		storeClient.put(key, Versioned.value(value, version));
+		});
 		return OK;
 	}
 	

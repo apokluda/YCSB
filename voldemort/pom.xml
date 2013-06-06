@@ -14,7 +14,7 @@
 	
    <dependencies>
      <dependency>
-       <groupId>voldemort</groupId>
+       <groupId>com.project-voldemort</groupId>
        <artifactId>voldemort</artifactId>
        <version>${voldemort.version}</version>
      </dependency>
@@ -27,16 +27,31 @@
        <groupId>com.yahoo.ycsb</groupId>
        <artifactId>core</artifactId>
        <version>${project.version}</version>
+     </dependency>	
+     <dependency>
+       <groupId>commons-lang</groupId>
+       <artifactId>commons-lang</artifactId>
+       <version>2.4</version>
      </dependency>
+     <dependency>
+       <groupId>com.google.protobuf</groupId>
+       <artifactId>protobuf-java</artifactId>
+       <version>2.3.0</version>
+     </dependency>
+	<dependency>
+		<groupId>com.hotelbeds.suppliersintegrations.caronte.core</groupId>
+		<artifactId>caronte-protobuf</artifactId>
+		<version>2.22.1347</version>
+	</dependency>
    </dependencies>
-
+<!--
    <repositories>
      <repository>
        <id>clojars.org</id>
        <url>http://clojars.org/repo</url>
      </repository>
    </repositories>
-
+-->
    <build>
     <plugins>
      <plugin>
